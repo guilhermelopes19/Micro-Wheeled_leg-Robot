@@ -39,6 +39,17 @@
 
 /************实例定义*************/
 
+void lqr_balance_loop();
+void jump_loop();
+void leg_loop();
+void yaw_loop();
+void web_loop();
+void yaw_angle_addup();
+void basicWebCallback(void);
+void webSocketEventCallback(uint8_t num, WStype_t type, uint8_t *payload, size_t length);
+void adc_calibration_init();
+void bat_check();
+
 //电机实例
 BLDCMotor motor1 = BLDCMotor(7);
 BLDCMotor motor2 = BLDCMotor(7);
@@ -52,20 +63,20 @@ MagneticSensorI2C sensor1 = MagneticSensorI2C(AS5600_I2C);
 MagneticSensorI2C sensor2 = MagneticSensorI2C(AS5600_I2C);
 
 //PID控制器实例
-PIDController pid_angle     {.P = 1,    .I = 0,   .D = 0, .ramp = 100000, .limit = 8};
-PIDController pid_gyro      {.P = 0.06, .I = 0,   .D = 0, .ramp = 100000, .limit = 8};
-PIDController pid_distance  {.P = 0.5,  .I = 0,   .D = 0, .ramp = 100000, .limit = 8};
-PIDController pid_speed     {.P = 0.7,  .I = 0,   .D = 0, .ramp = 100000, .limit = 8};
-PIDController pid_yaw_angle {.P = 1.0,  .I = 0,   .D = 0, .ramp = 100000, .limit = 8};
-PIDController pid_yaw_gyro  {.P = 0.04, .I = 0,   .D = 0, .ramp = 100000, .limit = 8};
-PIDController pid_lqr_u     {.P = 1,    .I = 15,  .D = 0, .ramp = 100000, .limit = 8};
-PIDController pid_zeropoint {.P = 0.002,.I = 0,   .D = 0, .ramp = 100000, .limit = 4};
-PIDController pid_roll_angle{.P = 8,    .I = 0,   .D = 0, .ramp = 100000, .limit = 450};
+PIDController pid_angle(1, 0, 0, 100000, 8);
+PIDController pid_gyro(0.06, 0, 0, 100000, 8);
+PIDController pid_distance(0.5, 0, 0, 100000, 8);
+PIDController pid_speed(0.7, 0, 0, 100000, 8);
+PIDController pid_yaw_angle(1.0, 0, 0, 100000, 8);
+PIDController pid_yaw_gyro(0.04, 0 , 0, 100000, 8);
+PIDController pid_lqr_u(1, 15, 0, 100000, 8);
+PIDController pid_zeropoint(0.002, 0, 0, 100000, 4);
+PIDController pid_roll_angle(8, 0, 0, 100000, 450);
 
 //低通滤波器实例
-LowPassFilter lpf_joyy{.Tf = 0.2};
-LowPassFilter lpf_zeropoint{.Tf = 0.1};
-LowPassFilter lpf_roll{.Tf = 0.3};
+LowPassFilter lpf_joyy(0.2);
+LowPassFilter lpf_zeropoint(0.1);
+LowPassFilter lpf_roll(0.3);
 
 // commander通信实例
 Commander command = Commander(Serial);
@@ -234,18 +245,18 @@ void setup() {
   motor2.initFOC();
 
   // 映射电机到commander
-    command.add('A', StabAngle, "pid angle");
-    command.add('B', StabGyro, "pid gyro");
-    command.add('C', StabDistance, "pid distance");
-    command.add('D', StabSpeed, "pid speed");
-    command.add('E', StabYawAngle, "pid yaw angle");
-    command.add('F', StabYawGyro, "pid yaw gyro");
-    command.add('G', lpfJoyy, "lpf joyy");
-    command.add('H', StabLqrU, "pid lqr u");
-    command.add('I', StabZeropoint, "pid zeropoint");
-    command.add('J', lpfZeropoint, "lpf zeropoint");
-    command.add('K', StabRollAngle, "pid roll angle");
-    command.add('L', lpfRoll, "lpf roll");
+    command.add('A', StabAngle, (char *) "pid angle");
+    command.add('B', StabGyro, (char *) "pid gyro");
+    command.add('C', StabDistance, (char *) "pid distance");
+    command.add('D', StabSpeed, (char *) "pid speed");
+    command.add('E', StabYawAngle, (char *) "pid yaw angle");
+    command.add('F', StabYawGyro, (char *) "pid yaw gyro");
+    command.add('G', lpfJoyy, (char *) "lpf joyy");
+    command.add('H', StabLqrU, (char *) "pid lqr u");
+    command.add('I', StabZeropoint, (char *) "pid zeropoint");
+    command.add('J', lpfZeropoint, (char *) "lpf zeropoint");
+    command.add('K', StabRollAngle, (char *) "pid roll angle");
+    command.add('L', lpfRoll, (char *) "lpf roll");
 
     //command.add('M', Stabtest_zeropoint, "test_zeropoint");
 

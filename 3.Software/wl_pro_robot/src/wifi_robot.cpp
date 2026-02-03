@@ -20,11 +20,11 @@
 // THE SOFTWARE.
 // -----------------------------------------------------------------------------
 
-#include "wifi.h"
+#include <wifi_robot.h>
 
 // 配置AP（热点）模式相关参数
-const char *AP_SSID = "WLROBOT"; 
-const char *AP_PSW = "12345678";    
+const char *AP_SSID = "WLROBOTIMECH"; 
+const char *AP_PSW = "1234567890";    
 
 IPAddress AP_IP(192, 168, 1, 11); 
 IPAddress AP_GATEWAY(192, 168, 1, 11); 
@@ -32,8 +32,8 @@ IPAddress AP_SUBNET(255, 255, 255, 0);
 
 
 // 配置STA模式相关参数
-char *sta_ssid = "MUJITECH";
-char *sta_password = "mujitech";
+const char *sta_ssid = "MUJITECH";
+const char *sta_password = "mujitech";
 
 
 
@@ -41,10 +41,10 @@ void WiFi_SetAP(void)
 {
 	WiFi.mode(WIFI_AP); 
 	WiFi.softAPConfig(AP_IP, AP_GATEWAY, AP_SUBNET); 
-	WiFi.softAP(AP_SSID, AP_PSW); 
-	// Serial.println();
-	// Serial.print("AP IP address = ");
-	// Serial.println(WiFi.softAPIP());
+	WiFi.softAP(AP_SSID, AP_PSW);
+	Serial.println();
+	Serial.print("AP IP address = ");
+	Serial.println(WiFi.softAPIP());
 }
 
 
@@ -56,7 +56,7 @@ void set_sta_wifi()
   // 等待连接
   while(WiFi.status()!=WL_CONNECTED)
   {
-    //Serial.print(".");
+    Serial.print(".");
     delay(500);
   }
   // 打印ESP-01S的IP地址

@@ -74,10 +74,10 @@ MagneticSensorI2C sensor1 = MagneticSensorI2C(AS5600_I2C);
 MagneticSensorI2C sensor2 = MagneticSensorI2C(AS5600_I2C);
 
 // Pwm Driver instance
-Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40, I2Cone);
+//Adafruit_PWMServoDriver board = Adafruit_PWMServoDriver(0x40, I2Cone);
 
 // PID Controller instances
-/*
+
 PIDController pid_angle(           1,  0, 0, 100000,   8);
 PIDController pid_gyro(         0.06,  0, 0, 100000,   8);
 PIDController pid_distance(      0.5,  0, 0, 100000,   8);
@@ -87,17 +87,18 @@ PIDController pid_yaw_gyro(     0.04,  0, 0, 100000,   8);
 PIDController pid_lqr_u(           1, 15, 0, 100000,   8);
 PIDController pid_zeropoint(   0.002,  0, 0, 100000,   4);
 PIDController pid_roll_angle(      8,  0, 0, 100000, 450);
-*/
 
-PIDController pid_angle(           1,  0, 0, 100000,   8);
-PIDController pid_gyro(         0.06,  0, 0, 100000,   8);
-PIDController pid_distance(      0,  0, 0, 100000,   8);
-PIDController pid_speed(         0,  0, 0, 100000,   8);
-PIDController pid_yaw_angle(     1.0,  0, 0, 100000,   8);
-PIDController pid_yaw_gyro(     0.04,  0, 0, 100000,   8);
-PIDController pid_lqr_u(           1, 15, 0, 100000,   8);
-PIDController pid_zeropoint(   0,  0, 0, 100000,   4);
-PIDController pid_roll_angle(      8,  0, 0, 100000, 450);
+
+//                                 P   I  D  ramp    limit
+/*PIDController pid_angle(           0,  0, 0, 100000,   8);
+PIDController pid_gyro(            0,  0, 0, 100000,   8);
+PIDController pid_distance(        0,  0, 0, 100000,   8);
+PIDController pid_speed(           0,  0, 0, 100000,   8);
+PIDController pid_yaw_angle(       0,  0, 0, 100000,   8);
+PIDController pid_yaw_gyro(        0,  0, 0, 100000,   8);
+PIDController pid_lqr_u(           0,  0, 0, 100000,   8);
+PIDController pid_zeropoint(       0,  0, 0, 100000,   4);
+PIDController pid_roll_angle(      0,  0, 0, 100000, 450);*/
 
 // Low-pass filter instances
 LowPassFilter lpf_joyy(0.2);
@@ -147,7 +148,7 @@ float gyro_control    = 0;
 float speed_control   = 0;
 float distance_control = 0;
 float LQR_u = 0;
-float angle_zeropoint = 8.2;
+float angle_zeropoint = 15.5;
 float distance_zeropoint = -256.0;       // Wheel position zero-point offset (-256 is an impossible position value, used as an unrefreshed flag)
 
 // YAW axis control data
@@ -228,8 +229,8 @@ void setup() {
   sensor1.init(&I2Ctwo);
   sensor2.init(&I2Cone);
 
-  board.begin();
-  board.setPWMFreq(60);
+  //board.begin();
+  //board.setPWMFreq(60);
 
   // MPU6050 settings
   mpu6050.begin();
@@ -299,7 +300,7 @@ void loop() {
   mpu6050.update();   // IMU data update
   lqr_balance_loop(); // LQR self-balancing control
   yaw_loop();         // Yaw axis steering control
-  leg_loop();         // Leg motion control
+  //leg_loop();         // Leg motion control
   
   // Assign self-balancing calculation output torque to motors
   motor1.target = (-0.5)*(LQR_u + YAW_output);
@@ -323,12 +324,12 @@ void loop() {
   }
   
   // Stop output (remote stop or loss of control due to excessive angle)
-  if(wrobot.go==0 || uncontrolable!=0)
+  /*if(wrobot.go==0 || uncontrolable!=0)
   {
     motor1.target = 0;
     motor2.target = 0;
     leg_position_add = 0;
-  }
+  }*/
   
   // Record previous remote control data
   wrobot.dir_last  = wrobot.dir;
@@ -344,7 +345,7 @@ void loop() {
   motor2.move();
   
   command.run();
-  }
+}
 
 // LQR self-balancing control
 void lqr_balance_loop(){
@@ -355,7 +356,10 @@ void lqr_balance_loop(){
   LQR_distance  = (-0.5) *(motor1.shaft_angle + motor2.shaft_angle);
   LQR_speed     = (-0.5) *(motor1.shaft_velocity + motor2.shaft_velocity);
   LQR_angle = (float)mpu6050.getAngleY();
-  LQR_gyro  = (float)mpu6050.getGyroY(); 
+  LQR_gyro  = (float)mpu6050.getGyroY();
+  
+  //Serial.print("angle: ");
+  //Serial.println(LQR_angle); 
   //Serial.println(LQR_distance); 
 
   // Calculate self-balancing output
@@ -583,7 +587,7 @@ void moveServoRestricted(uint8_t channel, long stsValNormalized) {
     pulse = map(170 - angle, 0, 180, SERVOMIN, SERVOMAX);
   }
 
-  board.setPWM(channel, 0, pulse);
+  //board.setPWM(channel, 0, pulse);
 }
 
 // Yaw axis steering control
@@ -606,8 +610,8 @@ void web_loop(){
 
 // Yaw axis angle accumulation function
 void yaw_angle_addup() {
-  YAW_angle  = (float)mpu6050.getAngleZ();;
-  YAW_gyro   = (float)mpu6050.getGyroZ();
+  YAW_angle  = (float) mpu6050.getAngleZ();;
+  YAW_gyro   = (float) mpu6050.getGyroZ();
 
   if(YAW_angle_zero_point == (-10))
   {
